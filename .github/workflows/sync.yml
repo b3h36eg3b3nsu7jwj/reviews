@@ -5,10 +5,6 @@ on:
     - cron: '*/15 * * * *'
   workflow_dispatch:
 
-concurrency:
-  group: sync-telegram
-  cancel-in-progress: false
-
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -17,7 +13,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install dependencies
         run: pip install requests
@@ -31,11 +29,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main
+          git fetch origin main
+          git reset --soft origin/main
           git add images/ last_update_id.txt
           if git diff --staged --quiet; then
             echo "Новых файлов нет"
           else
             git commit -m "Add new reviews from Telegram [skip ci]"
-            git push
+            git push origin main
           fi
